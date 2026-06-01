@@ -27,9 +27,7 @@ function choisir() {
   }
   const salutations = [
     `Coucou ${prenom} ! 👋 Tu as bien dormi ?`,
-    `Hé ${prenom}, t'es là ! 🎉`,
-    `Bienvenue ${prenom}, ça va être fun ! 🚀`,
-    `Oh ! C'est ${prenom} ! Quelle surprise ! 😄`
+ 
   ];
   message.value = salutations[Math.floor(Math.random() * salutations.length)];
   message.style.color = "#ff6b6b";
