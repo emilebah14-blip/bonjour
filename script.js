@@ -26,8 +26,8 @@ function choisir() {
     return;
   }
   const salutations = [
-    `Coucou ${prenom} ! 👋 Tu as bien dormi ?`,
- 
+    `Coucou ${prenom} ! 👋 tu as bien dormi?`,
+  
   ];
   message.value = salutations[Math.floor(Math.random() * salutations.length)];
   message.style.color = "#ff6b6b";
@@ -71,88 +71,131 @@ document.addEventListener("DOMContentLoaded", () => {
   if (!bouton) return;
 
   const zone = document.querySelector(".zone-boutons");
-  let posX = null, posY = null;
   let tentatives = 0;
+  let bloque = false; // true quand le bouton a capitulé
 
-  // Initialiser la position du bouton
+  // Coordonnées courantes du bouton DANS la zone (relatives)
+  let posX, posY;
+
   function initPos() {
     const zr = zone.getBoundingClientRect();
-    posX = zr.width - bouton.offsetWidth - 20;
-    posY = zr.height - bouton.offsetHeight - 20;
-    applPos();
+    const bw = bouton.offsetWidth  || 120;
+    const bh = bouton.offsetHeight || 50;
+    // Position initiale : coin bas-droit
+    posX = zr.width  - bw - 20;
+    posY = zr.height - bh - 20;
+    appliquer();
   }
 
-  function applPos() {
-    bouton.style.left = posX + "px";
-    bouton.style.top  = posY + "px";
-    bouton.style.right = "auto";
+  function appliquer() {
+    bouton.style.left   = posX + "px";
+    bouton.style.top    = posY + "px";
+    bouton.style.right  = "auto";
     bouton.style.bottom = "auto";
   }
 
-  window.addEventListener("load", initPos);
-  setTimeout(initPos, 100);
+  // Init après rendu
+  requestAnimationFrame(() => { requestAnimationFrame(initPos); });
 
+  // ---- SOURIS ----
   document.addEventListener("mousemove", (e) => {
-    if (!posX) initPos();
-    const rect = bouton.getBoundingClientRect();
-    const zr   = zone.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top  + rect.height / 2;
-    const dx = cx - e.clientX;
-    const dy = cy - e.clientY;
+    if (bloque) return;
+    if (posX === undefined) initPos();
+
+    const zr  = zone.getBoundingClientRect();
+    const bw  = bouton.offsetWidth;
+    const bh  = bouton.offsetHeight;
+
+    // Centre du bouton en coordonnées ÉCRAN
+    const cx = zr.left + posX + bw / 2;
+    const cy = zr.top  + posY + bh / 2;
+
+    const dx   = cx - e.clientX;
+    const dy   = cy - e.clientY;
     const dist = Math.sqrt(dx * dx + dy * dy);
+    const seuil = 140 + tentatives * 5;
 
-    const seuil = 130 + tentatives * 8;
-
-    if (dist < seuil) {
+    if (dist < seuil && dist > 0) {
       tentatives++;
-      const force = 60 + tentatives * 4;
-      // Fuir dans la direction opposée à la souris
+      const force = 70 + tentatives * 3;
+
+      // Nouvelle position en coordonnées zone (relatives)
       let nx = posX + (dx / dist) * force;
       let ny = posY + (dy / dist) * force;
 
-      // Rebondir dans les bords de la zone
-      const maxX = zr.width  - bouton.offsetWidth;
-      const maxY = zr.height - bouton.offsetHeight;
+      const maxX = zr.width  - bw;
+      const maxY = zr.height - bh;
       nx = Math.max(0, Math.min(nx, maxX));
       ny = Math.max(0, Math.min(ny, maxY));
 
-      // Si coincé dans un coin, téléporter
-      if ((nx <= 0 || nx >= maxX) && (ny <= 0 || ny >= maxY)) {
+      // Coincé dans un coin → téléportation
+      const coinX = nx <= 1 || nx >= maxX - 1;
+      const coinY = ny <= 1 || ny >= maxY - 1;
+      if (coinX && coinY) {
         nx = Math.random() * maxX;
         ny = Math.random() * maxY;
       }
 
-      posX = nx;
-      posY = ny;
-      applPos();
-
-      // Changer le texte selon les tentatives
-      if (tentatives === 3)  bouton.textContent = "Non 😅";
-      if (tentatives === 6)  bouton.textContent = "Nan !";
-      if (tentatives === 10) bouton.textContent = "🏃 Jamais !";
-      if (tentatives === 15) {
-        bouton.textContent = "Ok ok...";
-        bouton.style.background = "#a29bfe";
-        bouton.style.boxShadow = "0 4px 0 #6c5ce7";
-        bouton.addEventListener("click", () => {
-          const prenom = recupererPrenom();
-          const params = new URLSearchParams({ prenom });
-          window.location = "page3.html?" + params.toString();
-        }, { once: true });
-      }
+      posX = nx; posY = ny;
+      appliquer();
+      mettreAJourTexte();
     }
   });
 
-  // Tactile : le bouton fuit au tap
+  // ---- TACTILE : fuit à chaque touchstart, JAMAIS de navigation ----
   bouton.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    if (!posX) initPos();
-    const zr = zone.getBoundingClientRect();
-    posX = Math.random() * (zr.width  - bouton.offsetWidth);
-    posY = Math.random() * (zr.height - bouton.offsetHeight);
-    applPos();
+    e.preventDefault();   // empêche le clic fantôme
+    e.stopPropagation();
+    if (bloque) return;
+    if (posX === undefined) initPos();
+
+    const zr  = zone.getBoundingClientRect();
+    const bw  = bouton.offsetWidth;
+    const bh  = bouton.offsetHeight;
+    const maxX = zr.width  - bw;
+    const maxY = zr.height - bh;
+
+    // Téléportation aléatoire loin du doigt
+    const touch = e.touches[0];
+    const fingerX = touch.clientX - zr.left;
+    const fingerY = touch.clientY - zr.top;
+    let nx, ny, essais = 0;
+    do {
+      nx = Math.random() * maxX;
+      ny = Math.random() * maxY;
+      essais++;
+    } while (Math.abs(nx - fingerX) < 80 && Math.abs(ny - fingerY) < 80 && essais < 20);
+
+    posX = nx; posY = ny;
+    appliquer();
     tentatives++;
-    if (tentatives >= 5) bouton.textContent = "🏃 Rattrap-moi !";
+    mettreAJourTexte();
   }, { passive: false });
+
+  // Bloquer aussi le click normal tant qu'il n'a pas capitulé
+  bouton.addEventListener("click", (e) => {
+    if (!bloque) e.preventDefault();
+  });
+
+  function mettreAJourTexte() {
+    if (tentatives === 3)  { bouton.textContent = "Non 😅"; }
+    if (tentatives === 6)  { bouton.textContent = "Nan !!! 😤"; }
+    if (tentatives === 10) { bouton.textContent = "🏃 Jamais !"; }
+    if (tentatives === 15) {
+      bloque = true;
+      bouton.textContent = "Ok ok... 😩";
+      bouton.style.background = "#a29bfe";
+      bouton.style.boxShadow  = "0 4px 0 #6c5ce7";
+      // Maintenant le clic redirige vers page3
+      bouton.addEventListener("click", () => {
+        const prenom = recupererPrenom();
+        window.location = "page3.html?" + new URLSearchParams({ prenom }).toString();
+      }, { once: true });
+      bouton.addEventListener("touchend", (e) => {
+        e.preventDefault();
+        const prenom = recupererPrenom();
+        window.location = "page3.html?" + new URLSearchParams({ prenom }).toString();
+      }, { once: true });
+    }
+  }
 });

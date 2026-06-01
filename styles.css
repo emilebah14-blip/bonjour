@@ -138,6 +138,17 @@ button {
   top: 0;
 }
 
+footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: #2c3e50;
+    color: white;
+    text-align: center;
+    padding: 10px;
+}
+
 button:hover {
   background: #ff8080;
   transform: translateY(-2px);
@@ -148,17 +159,6 @@ button:active {
   transform: translateY(2px);
   box-shadow: 0 2px 0 var(--primary-dark);
   top: 2px;
-}
-
-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: #2c3e50;
-    color: white;
-    text-align: center;
-    padding: 10px;
 }
 
 button.secondary {
@@ -193,10 +193,15 @@ button.secondary:hover {
   bottom: 20px;
   background: #fd79a8;
   box-shadow: 0 4px 0 #c0597f;
-  min-width: 130px;
-  transition: left 0.05s, top 0.05s, transform 0.15s, box-shadow 0.15s;
+  /* Taille fixe — ne jamais hériter du flex/width:100% */
+  width: auto !important;
+  min-width: 110px;
+  max-width: 160px;
+  flex: none !important;
+  transition: left 0.08s ease, top 0.08s ease;
+  pointer-events: auto;
 }
-#non:hover { background: #fd79a8; }
+#non:hover { background: #ff91bc; }
 
 /* ===== PAGE 3 ===== */
 .bravo-icon {
@@ -250,6 +255,7 @@ button.secondary:hover {
 @media (max-width: 480px) {
   .container { padding: 28px 20px; }
   .buttons { flex-direction: column; }
-  button { min-width: unset; width: 100%; }
-  .zone-boutons { height: 200px; }
+  .buttons button { min-width: unset; width: 100%; }
+  .zone-boutons { height: 220px; }
+  #oui { min-width: 110px; max-width: 150px; }
 }
