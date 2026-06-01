@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bienvenue 👋</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="container">
+
+  <h1>👋 Bonjourrrrr !</h1>
+
+  <label for="prenom">Ton prénom</label>
+  <input
+    type="text"
+    id="prenom"
+    placeholder="Ex : kady"
+    autocomplete="given-name"
+    maxlength="30">
+
+  <label>Message pour toi</label>
+  <textarea
+    id="message"
+    readonly
+    placeholder="✨ Clique sur Choisir pour un message personnalisé !">
+  </textarea>
+
+  <div class="buttons">
+    <button onclick="choisir()" class="secondary">
+      ✨ Choisir
+    </button>
+    <button onclick="continuer()">
+      Continuer →
+    </button>
+  </div>
+
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
